@@ -47,7 +47,10 @@ $table->data = [
     ['Roll Number', s($request->rollnumber)],
     ['Branch', s($request->branch)],
     ['Semester', s($request->semester)],
+    ['Phone Number', s($request->phone)],
     ['Company', s($request->companyname)],
+    ['Company Address', nl2br(s($request->companyaddress))],
+    ['Training Duration', s($request->duration)],
     [
         'Training Start Date',
         userdate($request->startdate, '%d %B %Y')

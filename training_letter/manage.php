@@ -149,7 +149,10 @@ if (empty($requests)) {
             $actions = html_writer::link($approveurl, 'Approve')
                 . ' | '
                 . html_writer::link($rejecturl, 'Reject');
-    }
+        } else if ($request->status === 'approved') {
+            $letterurl = new moodle_url('/local/training_letter/letter.php', ['id' => $request->id]);
+            $actions = html_writer::link($letterurl, 'View Letter');
+        }
 
     $detailsurl = new moodle_url(
     '/local/training_letter/details.php',

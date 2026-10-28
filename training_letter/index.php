@@ -36,6 +36,9 @@ if ($mform->is_cancelled()) {
     $record->branch = $data->branch;
     $record->semester = $data->semester;
     $record->companyname = $data->companyname;
+    $record->companyaddress = $data->companyaddress;
+    $record->phone = $data->phone;
+    $record->duration = $data->duration;
     $record->startdate = $data->startdate;
     $record->enddate = $data->enddate;
     $record->description = $data->description;

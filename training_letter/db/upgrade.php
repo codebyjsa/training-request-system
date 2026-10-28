@@ -71,5 +71,31 @@ function xmldb_local_training_letter_upgrade($oldversion) {
         );
     }
 
+    if ($oldversion < 2026102800) {
+        $table = new xmldb_table('local_training_letter');
+
+        $phonefield = new xmldb_field('phone', XMLDB_TYPE_CHAR, '20', null, null, null, '');
+        if (!$dbman->field_exists($table, $phonefield)) {
+            $dbman->add_field($table, $phonefield);
+        }
+
+        $durationfield = new xmldb_field('duration', XMLDB_TYPE_CHAR, '20', null, XMLDB_NOTNULL, null, '6 Weeks');
+        if (!$dbman->field_exists($table, $durationfield)) {
+            $dbman->add_field($table, $durationfield);
+        }
+
+        $addressfield = new xmldb_field('companyaddress', XMLDB_TYPE_TEXT, null, null, null, null, null);
+        if (!$dbman->field_exists($table, $addressfield)) {
+            $dbman->add_field($table, $addressfield);
+        }
+
+        upgrade_plugin_savepoint(
+            true,
+            2026102800,
+            'local',
+            'training_letter'
+        );
+    }
+
     return true;
 }

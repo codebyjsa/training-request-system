@@ -10,6 +10,9 @@
                 <FIELD NAME="branch" TYPE="char" LENGTH="100" NOTNULL="true" DEFAULT=""/>
                 <FIELD NAME="semester" TYPE="int" LENGTH="2" NOTNULL="true" DEFAULT="0"/>
                 <FIELD NAME="companyname" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
+                <FIELD NAME="companyaddress" TYPE="text" NOTNULL="false"/>
+                <FIELD NAME="phone" TYPE="char" LENGTH="20" NOTNULL="false" DEFAULT=""/>
+                <FIELD NAME="duration" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="6 Weeks"/>
                 <FIELD NAME="startdate" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
                 <FIELD NAME="enddate" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
                 <FIELD NAME="description" TYPE="text" NOTNULL="true"/>

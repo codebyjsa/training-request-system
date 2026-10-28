@@ -41,12 +41,29 @@ class local_training_letter_request_form extends moodleform {
 $mform->addRule('semester', 'Semester is required', 'required');
 $mform->setType('semester', PARAM_INT);
 
+        $mform->addElement('text', 'phone', 'Phone Number');
+        $mform->setType('phone', PARAM_TEXT);
+        $mform->addRule('phone', 'Phone number is required', 'required');
+
         // Training details.
         $mform->addElement('header', 'trainingdetails', 'Training Details');
 
         $mform->addElement('text', 'companyname', 'Company Name');
         $mform->setType('companyname', PARAM_TEXT);
         $mform->addRule('companyname', 'Company name is required', 'required');
+
+        $mform->addElement('textarea', 'companyaddress', 'Company Address');
+        $mform->setType('companyaddress', PARAM_TEXT);
+        $mform->addRule('companyaddress', 'Company address is required', 'required');
+
+        $mform->addElement('select', 'duration', 'Training Duration', [
+            '4 Weeks' => '4 Weeks',
+            '6 Weeks' => '6 Weeks',
+            '6 Months' => '6 Months',
+        ]);
+        $mform->setType('duration', PARAM_TEXT);
+        $mform->setDefault('duration', '6 Weeks');
+        $mform->addRule('duration', 'Training duration is required', 'required');
 
         $mform->addElement('date_selector', 'startdate', 'Training Start Date');
         $mform->addElement('date_selector', 'enddate', 'Training End Date');
