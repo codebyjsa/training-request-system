@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8" ?>
-<XMLDB PATH="local/training_letter/db" VERSION="20261027" COMMENT="XMLDB file for Training Request Letter Generator">
+<XMLDB PATH="local/training_letter/db" VERSION="20261031" COMMENT="XMLDB file for Training Request Letter Generator">
     <TABLES>
         <TABLE NAME="local_training_letter" COMMENT="Training letter requests">
             <FIELDS>
@@ -12,12 +12,15 @@
                 <FIELD NAME="companyname" TYPE="char" LENGTH="255" NOTNULL="true" DEFAULT=""/>
                 <FIELD NAME="companyaddress" TYPE="text" NOTNULL="false"/>
                 <FIELD NAME="phone" TYPE="char" LENGTH="20" NOTNULL="false" DEFAULT=""/>
+                <FIELD NAME="trainingtype" TYPE="char" LENGTH="50" NOTNULL="true" DEFAULT="software"/>
                 <FIELD NAME="duration" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="6 Weeks"/>
                 <FIELD NAME="startdate" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
                 <FIELD NAME="enddate" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
-                <FIELD NAME="description" TYPE="text" NOTNULL="true"/>
+                <FIELD NAME="description" TYPE="text" NOTNULL="false"/>
                 <FIELD NAME="status" TYPE="char" LENGTH="20" NOTNULL="true" DEFAULT="pending"/>
-                <FIELD NAME="rejectionreason" TYPE="text" NOTNULL="false" />
+                <FIELD NAME="rejectionreason" TYPE="text" NOTNULL="false"/>
+                <FIELD NAME="coordinatorremarks" TYPE="text" NOTNULL="false"/>
+                <FIELD NAME="reviewedby" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
                 <FIELD NAME="timecreated" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
                 <FIELD NAME="timemodified" TYPE="int" LENGTH="10" NOTNULL="true" DEFAULT="0"/>
             </FIELDS>
@@ -28,6 +31,7 @@
             <INDEXES>
                 <INDEX NAME="status_idx" UNIQUE="false" FIELDS="status"/>
                 <INDEX NAME="rollnumber_idx" UNIQUE="false" FIELDS="rollnumber"/>
+                <INDEX NAME="trainingtype_idx" UNIQUE="false" FIELDS="trainingtype"/>
             </INDEXES>
         </TABLE>
     </TABLES>

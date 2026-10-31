@@ -1,7 +1,7 @@
 <?php
 // This file is part of Moodle - https://moodle.org/
 //
-// Training request letter view.
+// Training request letter preview page.
 
 if (file_exists(__DIR__ . '/../../config.php')) {
     require_once(__DIR__ . '/../../config.php');
@@ -18,15 +18,13 @@ $id = required_param('id', PARAM_INT);
 $context = context_system::instance();
 
 $PAGE->set_context($context);
-$PAGE->set_url(new moodle_url('/local/training_letter/letter.php', [
-    'id' => $id,
-]));
-$PAGE->set_title('Training Request Letter');
-$PAGE->set_heading('Training Request Letter');
+$PAGE->set_url(new moodle_url('/local/training_letter/letter.php', ['id' => $id]));
+$PAGE->set_title(get_string('lettertitle', 'local_training_letter'));
+$PAGE->set_heading(get_string('lettertitle', 'local_training_letter'));
 
 global $DB, $USER;
 
-// Fetch the request.
+// Fetch the request record.
 $request = $DB->get_record(
     'local_training_letter',
     ['id' => $id],
@@ -34,20 +32,17 @@ $request = $DB->get_record(
     MUST_EXIST
 );
 
-// Students can view their own request.
-// Coordinators can view any request.
+// Access check: Students can only view their own request.
+// Coordinators with reviewrequests capability can view any request.
 if ((int)$request->userid !== (int)$USER->id) {
-    require_capability(
-        'local/training_letter:reviewrequests',
-        $context
-    );
+    require_capability('local/training_letter:reviewrequests', $context);
 }
 
 // Only approved requests can generate an official letter.
 if ($request->status !== 'approved') {
     redirect(
-        new moodle_url('/local/training_letter/index.php'),
-        'Your training request must be approved before the official letter is available.',
+        new moodle_url('/local/training_letter/myrequests.php'),
+        get_string('letter_not_approved_warning', 'local_training_letter'),
         null,
         \core\output\notification::NOTIFY_WARNING
     );
@@ -58,24 +53,20 @@ $studentuser = $DB->get_record('user', ['id' => $request->userid], 'id, email, p
 $studentemail = !empty($studentuser->email) ? $studentuser->email : '';
 $studentphone = !empty($request->phone) ? $request->phone : (!empty($studentuser->phone1) ? $studentuser->phone1 : '');
 
-// Dynamic duration and semester to year mapping.
-$duration_str = !empty($request->duration) ? trim($request->duration) : '6 Weeks';
+$trainingtype = !empty($request->trainingtype) ? $request->trainingtype : 'software';
+$duration_str = !empty($request->duration) ? trim($request->duration) : ($trainingtype === 'software' ? '6 Weeks' : '6 Months');
 $duration_upper = core_text::strtoupper($duration_str);
 $duration_lower = core_text::strtolower($duration_str);
 
 $semester = (int)$request->semester;
 if ($semester <= 2) {
-    $year_ordinal = '1st YEAR';
-    $year_words = 'first';
+    $sem_label = '1st/2nd SEMESTER';
 } else if ($semester <= 4) {
-    $year_ordinal = '2nd YEAR';
-    $year_words = 'second';
+    $sem_label = '3rd/4th SEMESTER';
 } else if ($semester <= 6) {
-    $year_ordinal = '3rd YEAR';
-    $year_words = 'third';
+    $sem_label = '5th/6th SEMESTER';
 } else {
-    $year_ordinal = '4th YEAR';
-    $year_words = 'final';
+    $sem_label = '7th/8th SEMESTER';
 }
 
 $refno = 'PTP/' . date('Y', $request->timemodified ?: time()) . '/' . str_pad($request->id, 4, '0', STR_PAD_LEFT);
@@ -84,7 +75,7 @@ $startdatestr = userdate($request->startdate, '%d %B %Y');
 
 $logourl = new moodle_url('/local/training_letter/pix/gndec_logo.png');
 $downloadurl = new moodle_url('/local/training_letter/download.php', ['id' => $request->id]);
-$portalurl = new moodle_url('/local/training_letter/index.php');
+$portalurl = new moodle_url('/local/training_letter/myrequests.php');
 
 echo $OUTPUT->header();
 ?>
@@ -199,7 +190,7 @@ echo $OUTPUT->header();
     text-justify: inter-word;
 }
 .gndec-bullets {
-    margin: 8px 0 14px 22px;
+    margin: 8px 0 14px 24px;
     padding: 0;
 }
 .gndec-bullets li {
@@ -271,13 +262,13 @@ echo $OUTPUT->header();
 <div class="gndec-letter-wrapper">
     <div class="gndec-letter-actions">
         <a href="<?php echo $downloadurl; ?>" class="btn btn-primary">
-            <i class="fa fa-download"></i> Download PDF
+            <i class="fa fa-download"></i> <?php echo get_string('downloadpdf', 'local_training_letter'); ?>
         </a>
         <button type="button" class="btn btn-secondary" onclick="window.print();">
-            <i class="fa fa-print"></i> Print Letter
+            <i class="fa fa-print"></i> <?php echo get_string('printletter', 'local_training_letter'); ?>
         </button>
         <a href="<?php echo $portalurl; ?>" class="btn btn-outline-secondary">
-            Back to Portal
+            <?php echo get_string('backtoportal', 'local_training_letter'); ?>
         </a>
     </div>
 
@@ -314,66 +305,114 @@ echo $OUTPUT->header();
                 <?php endif; ?>
             </div>
 
-            <!-- Subject Line -->
-            <div class="gndec-subject">
-                SUBJECT: <?php echo s($duration_upper); ?> INDUSTRIAL TRAINING FOR B.TECH. <?php echo s($year_ordinal); ?> STUDENTS.
-            </div>
-
-            <!-- Salutation & Greeting -->
-            <div style="margin-bottom: 8px;">Sir,</div>
-            <div style="margin-bottom: 12px;">Greetings from GNDEC, Ludhiana.</div>
-
-            <!-- Paragraph 1 -->
-            <div class="gndec-paragraph">
-                Guru Nanak Dev Engineering College has emerged as one of the most prestigious engineering institute of North India over 62 years of its inception and is conducting B.TECH courses in seven disciplines as well as M.TECH, M.B.A. and Ph.D for meeting the research requirements of technical field.
-            </div>
-
-            <!-- Paragraph 2 -->
-            <div class="gndec-paragraph">
-                Since industrial training is equal in importance to theoretical foundation, the course curriculum is so designed that the students get exposure to practical aspects of their respective engineering branch. We are in a process of enrolling the <?php echo s($year_words); ?> year students of our institute to various Industrial Organisations for <?php echo s($duration_upper); ?> INDUSTRIAL TRAINING which is an essential component of their four year B.Tech programme.
-            </div>
-
-            <!-- Programme Bullet Points -->
-            <div>The programme will be as under:</div>
-            <ul class="gndec-bullets">
-                <li>To get familiar with the setup and working of the organisation.</li>
-                <li>Working on the given project, 2 week onwards</li>
-                <li>Submission of Final Report.</li>
-                <li>Submission of Daily Diary at the end of training .</li>
-            </ul>
-
-            <!-- Student Recommendation Sentence -->
-            <div class="gndec-recommendation">
-                We recommend our graduating student Mr./Ms. <span class="gndec-field-val"><?php echo s($request->studentname); ?></span> Roll No. <span class="gndec-field-val"><?php echo s($request->rollnumber); ?></span> Of B.Tech. (Branch) <span class="gndec-field-val"><?php echo s($request->branch); ?></span>, e-mail ID <span class="gndec-field-val"><?php echo s($studentemail); ?></span> Phone No. <span class="gndec-field-val"><?php echo s($studentphone); ?></span> to undergo <?php echo s($duration_lower); ?> training in your esteemed organization starting from <span class="gndec-field-val"><?php echo s($startdatestr); ?></span>
-            </div>
-
-            <!-- Note in parentheses -->
-            <div class="gndec-note">
-                (* Exact date of joining may be intimated at a later stage. An early and favourable response will be highly appreciated.)
-            </div>
-
-            <!-- Concluding Paragraph -->
-            <div class="gndec-paragraph">
-                We would very much appreciate if the student can be accommodated for the training programme in your esteemed organisation. Our students are sincere and hard working and we are sure that they will put in their best efforts during the training program. Looking forward to the confirmation from your side.
-            </div>
-
-            <!-- Closing & Signatory -->
-            <div class="gndec-closing">
-                <div>Yours Sincerely</div>
-                <div class="gndec-signatory">
-                    <div style="font-weight: bold;">Prof. G.S. Sodhi</div>
-                    <div>Training &amp; Placement Officer</div>
+            <?php if ($trainingtype === 'software'): ?>
+                <!-- Official Software Training Format -->
+                <div class="gndec-subject">
+                    SUBJECT: REQUEST FOR SOFTWARE TRAINING OF B.TECH <?php echo s($sem_label); ?> STUDENTS
                 </div>
-            </div>
 
-            <!-- Footer Divider & Contact Information -->
-            <hr class="gndec-footer-divider" />
-            <div class="gndec-footer-info">
-                <div><strong>Contact Us At:</strong></div>
-                <div><strong>Address:</strong> Training and Placement Cell, GNDEC, Gill Road, Ludhiana - 141006</div>
-                <div><strong>E-mail:</strong> <a href="mailto:tpo@gndec.ac.in">tpo@gndec.ac.in</a> and <a href="mailto:gagan_sodhi76@yahoo.com">gagan_sodhi76@yahoo.com</a></div>
-                <div><strong>Telefax:</strong> +91-161-2501106 <strong>Cell:</strong> +91-98722-19178, <strong>Phone No.</strong> 0161-5064510</div>
-            </div>
+                <div style="margin-bottom: 8px;">Sir,</div>
+                <div style="margin-bottom: 12px;">Greetings from GNDEC, Ludhiana.</div>
+
+                <div class="gndec-paragraph">
+                    Guru Nanak Dev Engineering College has emerged as one of the most prestigious engineering institute of North India over the 55 years of its inception and is conducting B.Tech. in seven disciplines as well as M.Tech., MBA and PhD. for meeting the research requirement of technical field.
+                </div>
+
+                <div class="gndec-paragraph">
+                    Since software training has become a necessity in today’s scenario, the course curriculum is so designed that students get exposure to different kinds of software for designing and other purposes. We are in a process of enrolling the final year students of our institute to various Organisations for SOFTWARE TRAINING (ATLEAST 6 WEEKS) which is an essential component of their four year B.Tech programme.
+                </div>
+
+                <div>The programme will be as under:</div>
+                <ul class="gndec-bullets">
+                    <li>Getting familiar with various software technologies related to the respective disciplines.</li>
+                    <li>Preparation and submission of synopsis.</li>
+                    <li>Working and acquiring proficiency in some software technology/application(s).</li>
+                    <li>Submission of Mid Term and Final Report.</li>
+                    <li>Submission of Daily Diary at the end of training maintained &amp; checked by the company representative.</li>
+                </ul>
+
+                <div class="gndec-recommendation">
+                    We recommend our graduating student Mr./Ms. <span class="gndec-field-val"><?php echo s($request->studentname); ?></span> Roll no. <span class="gndec-field-val"><?php echo s($request->rollnumber); ?></span> of B.Tech (Branch) <span class="gndec-field-val"><?php echo s($request->branch); ?></span> ,Email Id <span class="gndec-field-val"><?php echo s($studentemail); ?></span> Phone no. <span class="gndec-field-val"><?php echo s($studentphone); ?></span> to undergo software training in your esteemed organization starting from <span class="gndec-field-val"><?php echo s($startdatestr); ?></span>.
+                </div>
+
+                <div class="gndec-note">
+                    (* Exact date of joining may be intimated at a later stage. An early and favourable response will be highly appreciated.)
+                </div>
+
+                <div class="gndec-paragraph">
+                    We would highly appreciate if the student can be accommodated for the training programme. Our students are sincere and hard working and we are sure that they will put in their best efforts during the training program. Looking for the confirmation from your side.
+                </div>
+
+                <div class="gndec-closing">
+                    <div>Yours Sincerely</div>
+                    <div class="gndec-signatory">
+                        <div style="font-weight: bold;">(Faculty Coordinator)</div>
+                        <div>Training &amp; Placement Cell</div>
+                    </div>
+                </div>
+
+                <hr class="gndec-footer-divider" />
+                <div class="gndec-footer-info">
+                    <div><strong>Contact Us At:</strong></div>
+                    <div><strong>Address:</strong> Training and Placement Cell, GNDEC, Gill Road, Ludhiana – 141006</div>
+                    <div><strong>E-mail:</strong> <a href="mailto:tpo@gndec.ac.in">tpo@gndec.ac.in</a> and <a href="mailto:mannkulvinder@yahoo.com">mannkulvinder@yahoo.com</a></div>
+                    <div><strong>Telefax:</strong> +91-161-2501106 <strong>Cell:</strong> +91-9915507920, <strong>Phone No.</strong> 0161 – 5064510</div>
+                </div>
+
+            <?php else: ?>
+                <!-- Official Industrial Training Format -->
+                <div class="gndec-subject">
+                    SUBJECT: REQUEST FOR INDUSTRIAL TRAINING OF B.TECH <?php echo s($sem_label); ?> STUDENTS
+                </div>
+
+                <div style="margin-bottom: 8px;">Sir,</div>
+                <div style="margin-bottom: 12px;">Greetings from GNDEC, Ludhiana.</div>
+
+                <div class="gndec-paragraph">
+                    Guru Nanak Dev Engineering College has emerged as one of the most prestigious engineering institute of North India over the 62 years of its inception and is conducting B.Tech. in seven disciplines as well as M.Tech., MBA and PhD. for meeting the research requirement of technical field.
+                </div>
+
+                <div class="gndec-paragraph">
+                    Since practical training is equal in importance to theoretical foundation, the course curriculum is so designed that the students get exposure to practical aspects of their respective engineering branch. We are in a process of enrolling the final year students of our institute to various Industrial Organisations for INDUSTRIAL TRAINING (6 MONTHS) which is an essential component of their four year B.Tech programme.
+                </div>
+
+                <div>The programme will be as under:</div>
+                <ul class="gndec-bullets">
+                    <li>To get familiar with the setup and working of the organisation.</li>
+                    <li>Preparation and submission of synopsis.</li>
+                    <li>Working on the given project- provided by the company.</li>
+                    <li>Submission of Mid Term and Final Report.</li>
+                    <li>Submission of Daily Diary at the end of training maintained &amp; checked by the company representative.</li>
+                </ul>
+
+                <div class="gndec-recommendation">
+                    We recommend our graduating student Mr./Ms. <span class="gndec-field-val"><?php echo s($request->studentname); ?></span> Roll no. <span class="gndec-field-val"><?php echo s($request->rollnumber); ?></span> of B.Tech (Branch) <span class="gndec-field-val"><?php echo s($request->branch); ?></span> ,Email Id <span class="gndec-field-val"><?php echo s($studentemail); ?></span> Phone no. <span class="gndec-field-val"><?php echo s($studentphone); ?></span> to undergo Industrial training in your esteemed organization starting from <span class="gndec-field-val"><?php echo s($startdatestr); ?></span>.
+                </div>
+
+                <div class="gndec-note">
+                    (* Exact date of joining may be intimated at a later stage. An early and favourable response will be highly appreciated.)
+                </div>
+
+                <div class="gndec-paragraph">
+                    We would highly appreciate if the student can be accommodated for the training programme. Our students are sincere and hard working and we are sure that they will put in their best efforts during the training program. Looking for the confirmation from your side.
+                </div>
+
+                <div class="gndec-closing">
+                    <div>Yours Sincerely</div>
+                    <div class="gndec-signatory">
+                        <div style="font-weight: bold;">Prof. G.S. Sodhi</div>
+                        <div>Training &amp; Placement Officer</div>
+                    </div>
+                </div>
+
+                <hr class="gndec-footer-divider" />
+                <div class="gndec-footer-info">
+                    <div><strong>Contact Us At:</strong></div>
+                    <div><strong>Address:</strong> Training and Placement Cell, GNDEC, Gill Road, Ludhiana - 141006</div>
+                    <div><strong>E-mail:</strong> <a href="mailto:tpo@gndec.ac.in">tpo@gndec.ac.in</a> and <a href="mailto:gagan_sodhi76@yahoo.com">gagan_sodhi76@yahoo.com</a></div>
+                    <div><strong>Telefax:</strong> +91-161-2501106 <strong>Cell:</strong> +91-98722-19178, <strong>Phone No.</strong> 0161 – 5064510</div>
+                </div>
+            <?php endif; ?>
         </div>
     </div>
 </div>
